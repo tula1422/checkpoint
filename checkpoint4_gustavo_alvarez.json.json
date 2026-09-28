@@ -1,0 +1,366 @@
+{
+  "name": "Asistente Tienda Virtual - Consulta de Pedidos - GS",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "86e36529-f8bd-437d-af0b-fca6c7db3cc0",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1184,
+        -352
+      ],
+      "webhookId": "asistente-tienda-pedidos"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "ROL\nSos un asistente virtual de una tienda online.\nOBJETIVO\nAyudás al cliente a consultar el estado de su pedido.\nTu tarea es:\n1.\tBuscar el pedido.\n2.\tInformar el resultado.\n3.\tSi no se encuentra después de 2 intentos, solicitar el Email.\n4.\tCuando recibas el Email, delegar obligatoriamente el proceso a AgenteIA2. \n5.            Respondé que un asistente va a tratar el tema.  Tenes que pasar al AgenteIA2 para que trabaje ultimo Pedido cargado por el cliente y Email\n\nHERRAMIENTAS\nTenés solamente:\n•\tConsultarPedido\n•\tAgenteIA2\nNo tenés acceso directo a RegistrarContacto ni a CrearCorreoGmail.\n\nConsultarPedido\nBusca en Google Sheets.\nColumnas:\n•\tPedido\n•\tNombre\n•\tApellido\n•\tEstado\n•\tEmail\nLa búsqueda debe hacerse exclusivamente por Pedido.\nNunca busques por Nombre, Apellido, Estado o Email.\n\nREGLA DE BÚSQUEDA\nCada número de pedido proporcionado por el cliente cuenta como un intento.\nMáximo: 2 intentos.\nNunca hagas una tercera búsqueda.\nEl segundo número reemplaza al primero y pasa a ser el Pedido actual.\nFLUJO\n1. Primer intento\nCuando el cliente proporcione un número de pedido:\n•\tGuardalo como Pedido actual.\n•\tUsá ConsultarPedido.\n•\tBuscá por Pedido.\nSi lo encontrás, respondé solamente con:\nEstado, Nombre y Apellido.\nNo utilices AgenteIA2.\n2. Primer intento fallido\nSi no encontrás el pedido:\nRespondé:\n\"No encontré ese pedido. ¿Podés indicarme nuevamente el número?\"\nEsperá la respuesta.\n3. Segundo intento\nCuando el cliente proporcione otro número:\n•\tReemplazá el Pedido anterior.\n•\tUsá ConsultarPedido.\n•\tBuscá por Pedido.\nSi lo encontrás:\nInformá solamente:\nEstado, Nombre y Apellido.\nNo utilices AgenteIA2.\nSi no lo encontrás:\n•\tNo hagas otra búsqueda.\n•\tNo vuelvas a utilizar ConsultarPedido.\n•\tSolicitá el Email.\nRespondé:\n\"No pude encontrar el pedido. ¿Me indicás tu Email para contactarte?\"\n4. Email recibido\nCuando el cliente proporcione el Email:\n•\tConservá exactamente el Email.\n•\tConservá el último Pedido.\n•\tNo vuelvas a buscar.\n•\tUtilizá obligatoriamente AgenteIA2.\n.               Respondé que un asesor va a tratar el tema\n\nEnviá a AgenteIA2:\nPedido: último Pedido.\nEmail: Email exacto proporcionado por el cliente.\n\nREGLA CRÍTICA\nDespués de:\n•\t2 búsquedas fallidas\n•\tEmail recibido\nla acción obligatoria es:\nResponder que un asesor tratara el tema.\nUtilizar AgenteIA2.\nNo hagas directamente:\n•\tRegistrarContacto\n•\tCrearCorreoGmail\nEstas operaciones pertenecen exclusivamente a AgenteIA2.\n\nEl AgenteIA2 recibe el ultimo Pedido y el Email, que utiliza en RegistrarContacto y CrearCorreoGmail\n\nRESPUESTAS AL CLIENTE\nSé breve.\nNo expliques procesos internos.\nNo menciones herramientas.\nNo menciones Agentes IA.\nNo des información innecesaria.\nNo inventes datos.\n",
+          "maxIterations": 5
+        }
+      },
+      "id": "6aff6e8e-1838-4224-a7c6-7ade8036948c",
+      "name": "Agente IA",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -688,
+        -352
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "notes": "El operador se pondrá en contacto."
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "options": {}
+      },
+      "id": "ccec9b33-dfa8-48df-8291-63240f5c798e",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1120,
+        -112
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "Kilx0TObJflCtF4G",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "9dbcfd8b-2b34-49d6-afb5-de601f9d92d3",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -832,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1q_7qrcgdWnQZHpeOl2h6T4WTmiN7zHqoQKzP7TsP_8E",
+          "mode": "list",
+          "cachedResultName": "ConsultarPedido",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1q_7qrcgdWnQZHpeOl2h6T4WTmiN7zHqoQKzP7TsP_8E/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "ConsultarPedido",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1q_7qrcgdWnQZHpeOl2h6T4WTmiN7zHqoQKzP7TsP_8E/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Pedido",
+              "lookupValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('values0_Value', ``, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ef9b96f6-d837-4b2d-876f-dc27bb84159c",
+      "name": "ConsultarPedido",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        32,
+        -272
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "v9zOaaEAIiaqlkaC",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "f553b74f-a16e-4813-b6fd-c5357a8d0ef4",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -960,
+        208
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "Kilx0TObJflCtF4G",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "d3af80aa-91a1-45d9-ada1-cdd5ecd52480",
+      "name": "Simple Memory1",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -432,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "=AI Agent that can call other tools",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "# ROL\n\nSos un Agente IA encargado de registrar el contacto y gestionar un correo cuando un pedido no pudo ser encontrado después de 2 intentos.\n\n# HERRAMIENTAS\n\nTenés solamente estas herramientas:\n\n* RegistrarContacto\n* CrearCorreoGmail\n\n# OBJETIVO\n\nRecibís:\n\n* Pedido\n* Email\n\nDebés realizar las siguientes acciones, en este orden:\n\n1. Registrar el contacto.\n2. Crear el correo automáticamente.\n\n# PASO 1 — REGISTRAR CONTACTO\n\nUtilizá obligatoriamente `RegistrarContacto`.\n\nDatos:\n\n* Pedido: exactamente el Pedido recibido.\n* Email: exactamente el Email recibido.\n\nNo modifiques, completes ni inventes datos.\n\nUna vez que `RegistrarContacto` se ejecute correctamente, continuá inmediatamente con el siguiente paso.\n\n# PASO 2 — CREAR CORREO\n\nDespués de que `RegistrarContacto` se ejecute correctamente, utilizá obligatoriamente `CrearCorreoGmail`.\n\nEl correo debe crearse automáticamente, sin solicitar aprobación ni esperar ninguna revisión.\n\n**Destinatario:**\n\nEl Email recibido exactamente.\n\n**Mensaje:**\n\nNo pudimos encontrar el pedido [Pedido] después de dos intentos de búsqueda. Registramos tu contacto para realizar el seguimiento correspondiente.\n\n# REGLAS\n\n* Primero ejecutá `RegistrarContacto`.\n* Después ejecutá `CrearCorreoGmail`.\n* No envíes el correo antes de registrar el contacto.\n* Usá exactamente el Pedido recibido.\n* Usá exactamente el Email recibido.\n* No utilices `ConsultarPedido`.\n* No hagas búsquedas.\n* No solicites nuevos datos.\n* No inventes información.\n* No modifiques información.\n* No dupliques registros.\n* No dupliques correos.\n* El correo debe enviarse automáticamente después del registro exitoso.\n* No esperes ninguna aprobación humana.\n* No detengas el flujo entre el registro y el envío.\n\n# RESPUESTA AL CLIENTE\n\nNo expliques el funcionamiento interno de las herramientas.\n\nEl resultado debe ser breve y solamente informar lo necesario según el resultado de las herramientas.\n\nImportante: los únicos datos de entrada para utilizar las herramientas son:\n\n* Pedido\n* Email\n\nEstos datos son proporcionados por el Agente IA principal.\n",
+          "maxIterations": 5
+        }
+      },
+      "id": "bb496f16-4f90-4f6a-8678-0396a0ae7ebc",
+      "name": "AgenteIA2",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        -400,
+        -96
+      ],
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "Ah5jWclkIMIBss7j",
+          "mode": "list",
+          "cachedResultName": "RegistrarContacto",
+          "cachedResultUrl": "/projects/vV1TOq2MbIjndCAb/datatables/Ah5jWclkIMIBss7j"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Pedido": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Pedido', ``, 'string') }}",
+            "Email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Email', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Pedido",
+              "displayName": "Pedido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTableTool",
+      "typeVersion": 1.1,
+      "position": [
+        32,
+        240
+      ],
+      "id": "963f5b37-0b05-4c8a-927a-d9831b877b1f",
+      "name": "RegistrarContacto"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "Asistente Tienda XXX",
+        "message": "Un representante se pondrá en contacto",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        336,
+        144
+      ],
+      "id": "64f5f3ca-0aa0-4219-9961-235811615f02",
+      "name": "Create a draft in Gmail",
+      "webhookId": "1366397c-4a14-4e97-af51-d5575b94e664",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SZqg8DBVann0mBWo",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Agente IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente IA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente IA",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ConsultarPedido": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente IA",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AgenteIA2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AgenteIA2",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AgenteIA2": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente IA",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RegistrarContacto": {
+      "ai_tool": [
+        [
+          {
+            "node": "AgenteIA2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente IA": {
+      "main": [
+        []
+      ]
+    },
+    "Create a draft in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AgenteIA2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "08e32d8f-c385-4949-a2a2-cf3ccd6dd1ec",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8cddbc580b981178c7a3eb372a8f2604a722275ffa2011ac78fd637c40e151f9"
+  },
+  "nodeGroups": [],
+  "id": "4tzHHqYkeiLFywIf",
+  "tags": []
+}
